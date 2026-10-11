@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: clinixos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clinixos-dev-pw}
+      POSTGRES_DB: clinixos
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinixos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://clinixos:${POSTGRES_PASSWORD:-clinixos-dev-pw}@db:5432/clinixos
+      CLINIXOS_SECRET: ${CLINIXOS_SECRET:?Set CLINIXOS_SECRET before deploying}
+      CORS_ORIGINS: http://localhost:5173,http://localhost
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
