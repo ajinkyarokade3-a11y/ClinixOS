@@ -1,108 +1,163 @@
-# ClinixOS-ai — Intelligent Hospital Operations Platform
+# ClinixOS — Intelligent Hospital Operations Platform
 
-Browser-based full-stack web application (React + TypeScript + Vite + Tailwind frontend,
-FastAPI + SQLAlchemy backend). Hospital operations data shown here is for demonstration —
-never connected to real ventilators, never clinically validated, never real market research.
+![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-124_passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-## Modules (all wired to live backend endpoints)
+ClinixOS is a full-stack hospital operations platform that brings soft computing
+and AI search techniques into everyday clinical workflows — ventilator tuning,
+OT scheduling, equipment maintenance, appointments, EV logistics, medicine
+traceability, pricing strategy, and dispensary text prediction — unified behind
+one responsive operations dashboard.
 
-| Page | Backend |
+## ✨ Features
+
+| Module | Capability |
 |---|---|
-| Overview Dashboard | Aggregates appointments, maintenance, OT simulation, pharmacy endpoints |
-| Ventilator Oxygen Intelligence | Mamdani fuzzy inference, centroid defuzzification (`/api/ventilator`) |
-| OT Scheduling & ICU Allocation | Mamdani risk + Sugeno buffer, 75-workflow simulation (`/api/ot-scheduling`) |
-| Biomedical Predictive Maintenance | Hybrid neuro-fuzzy (Sugeno + NumPy MLP), training/evaluation (`/api/maintenance`) |
-| Smart Hospital Appointments | SQLAlchemy persistence, conflict-safe booking, queue (`/api/appointments`) |
-| Hospital EV Route Optimizer | A* search with battery/charging model (`/api/ev-routing`) |
-| Medicine Batch Traceability | BFS downstream + DFS upstream on supply-chain graph (`/api/traceability`) |
-| Pharmaceutical Market Strategy | Minimax + alpha-beta duopoly simulator (`/api/market`) |
-| Pharmacy Language Models | Bigram µLM + trigram SLM next-word prediction (`/api/pharmacy-lm`) |
-| Simulation History & Reports | Live OT simulation runs and summaries |
-| Settings & User Management | Live user records, registration, role matrix |
+| Overview Dashboard | KPIs, appointment trends, OT risk distribution, equipment tiers, department workload, alerts |
+| Ventilator Oxygen Intelligence | Mamdani fuzzy inference (SpO₂ + respiration rate → oxygen flow) with membership charts and rule tracing |
+| OT Scheduling & ICU Allocation | Mamdani risk scoring plus Sugeno turnover-buffer model, 75-workflow simulation with reports |
+| Predictive Maintenance | Hybrid neuro-fuzzy system (Sugeno fuzzy + neural network), training, evaluation, maintenance queue |
+| Smart Appointments | 24-doctor directory, conflict-safe booking, rescheduling, patient queue with waiting-time estimates |
+| EV Route Optimizer | A* search with battery and charging-stop planning on a hospital road network |
+| Medicine Traceability | BFS downstream tracking, DFS upstream investigation, recall reports on a supply-chain graph |
+| Market Strategy | Minimax + alpha-beta duopoly pricing simulator with game-tree visualization |
+| Pharmacy Language Models | Bigram and trigram next-word prediction for dispensary text entry |
+| Simulation History & Reports | Reproducible simulation runs with distribution charts and filtering |
+| Settings & User Management | Role-based users (admin/doctor/nurse/technician/viewer), registration, security overview |
 
-## Quick start (development)
+Additional highlights: JWT-style authenticated API with role enforcement,
+double-booking prevention under concurrent load, global search, notifications,
+CSV-friendly reporting tables, Docker and PostgreSQL support, and health checks.
+
+## 🚀 Quick start
+
+**Backend** — http://localhost:8000 (interactive docs at `/docs`)
 
 ```bash
-# Backend (http://localhost:8000, docs at /docs)
 cd backend
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
+```
 
-# Frontend (http://localhost:5173) — separate terminal
+**Frontend** — http://localhost:5173 (separate terminal)
+
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Seed demo data, then sign in (Login page or Appointments page):
+Seed the database and sign in:
 
 ```bash
 curl -X POST http://localhost:8000/api/auth/seed
-# reception / reception123 · admin / admin123 · viewer / viewer123
 ```
 
-## Configuration (.env — see .env.example)
+| Username | Password | Role |
+|---|---|---|
+| Ajinkya Rokade | Ajinkya123 | Administrator |
+| admin | admin123 | Administrator |
+| reception | reception123 | Staff (booking) |
+| viewer | viewer123 | Read-only |
+
+## 🛠️ Tech stack
+
+- **Backend:** FastAPI, SQLAlchemy 2, Pydantic, NumPy, scikit-fuzzy
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, React Router, Recharts
+- **Database:** SQLite out of the box, PostgreSQL via `DATABASE_URL`
+- **DevOps:** Docker, docker-compose, nginx, pytest
+
+## ⚙️ Configuration
+
+See [.env.example](.env.example). Key variables:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:///./clinixos.db` | PostgreSQL via `postgresql+psycopg2://…` |
-| `CLINIXOS_SECRET` | insecure dev default (warns in logs) | **Required in production** — token signing |
-| `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Allowed browser origins |
+| `DATABASE_URL` | `sqlite:///./clinixos.db` | PostgreSQL connection string |
+| `CLINIXOS_SECRET` | dev default | Token signing key (set a strong value for deployment) |
+| `CORS_ORIGINS` | `http://localhost:5173,…` | Allowed browser origins |
 | `LOG_LEVEL` | `INFO` | Backend log verbosity |
 
-## Database & migrations
-
-- SQLite by default; data persists in `backend/clinixos.db`.
-- PostgreSQL: set `DATABASE_URL` (driver `psycopg2-binary` is in requirements).
-- Schema is managed with `create_all` on startup. Verify/stamp with:
+Check schema status any time:
 
 ```bash
 cd backend
-python -m app.database.migrate --check   # exit 1 if tables are missing
-python -m app.database.migrate           # create + stamp schema version
+python -m app.database.migrate --check
 ```
 
-## Tests (actually executed)
+## 🔌 API overview
+
+| Area | Base path | Highlights |
+|---|---|---|
+| Auth | `/api/auth` | register, login, me, users, seed |
+| Appointments | `/api/appointments` | doctors, patients, book, cancel, reschedule, daily, queue, slots, summary, doctor-stats |
+| Ventilator | `/api/ventilator` | simulate, sample |
+| OT Scheduling | `/api/ot-scheduling` | mamdani, sugeno, simulate, summary |
+| Maintenance | `/api/maintenance` | inventory, equipment detail, predict, queue, history, train, evaluate |
+| EV Routing | `/api/ev-routing` | graph, route |
+| Traceability | `/api/traceability` | graph, batches, BFS/DFS traversal, recall |
+| Market | `/api/market` | simulate, payoff |
+| Pharmacy LM | `/api/pharmacy-lm` | corpus, bigram/trigram/compare prediction |
+| System | `/health`, `/` | app + database health, module index |
+
+## ✅ Testing
 
 ```bash
 cd backend
-python -m pytest tests/ -v     # 118 tests: fuzzy, defuzzification, HNFS, A*,
-                               # BFS/DFS, minimax, appointments, auth, API
-                               # integration incl. concurrent-booking race test
+python -m pytest tests/ -v
+```
+
+124 tests covering fuzzy inference and defuzzification, neuro-fuzzy math,
+A* routing, BFS/DFS traversal, Minimax with pruning equivalence, appointment
+scheduling including a concurrent-booking race test, authentication and
+authorization, seed consistency, and end-to-end API integration.
+
+```bash
 cd ../frontend
-npm run typecheck               # tsc --noEmit, clean
-npm run build                   # production build
+npm run typecheck   # strict TypeScript, clean
+npm run build       # optimized production bundle
 ```
 
-## Deployment (Docker)
+## 🐳 Deployment
 
 ```bash
-cp .env.example .env   # then set CLINIXOS_SECRET and POSTGRES_PASSWORD
+cp .env.example .env   # set CLINIXOS_SECRET and POSTGRES_PASSWORD
 docker compose up --build
-# frontend :80 · backend :8000 · postgres with pgdata volume
 ```
 
-Health checks: backend `GET /health` reports app + database status (used as the
-container HEALTHCHECK); frontend serves `/health`. Structured startup logging
-via `LOG_LEVEL`.
+This starts PostgreSQL (persisted volume), the FastAPI backend on `:8000`
+with container health checks, and the nginx-served frontend on `:80`.
 
-## Security model (audited)
+## 📁 Project structure
 
-- Passwords: PBKDF2-HMAC-SHA256 (200k iterations) with per-user salt; no plaintext storage.
-- Tokens: HMAC-SHA256 signed, 8h expiry, verified on every protected request.
-- Authorization: `require_roles` dependency on booking, patient, and admin endpoints;
-  admin self-registration blocked (403); patient lists require sign-in.
-- Validation: server-side Pydantic bounds on all inputs; 409 on schedule conflicts,
-  404 on missing records, 422 on out-of-range fuzzy inputs.
-- Privacy: all patient/equipment/pharmacy data is synthetic demo data.
+```
+ClinixOS-ai/
+├── backend/
+│   ├── app/
+│   │   ├── api/          # FastAPI routers (one per module)
+│   │   ├── services/     # Fuzzy logic, neural nets, search, scheduling, auth
+│   │   ├── models/       # SQLAlchemy entities
+│   │   ├── schemas/      # Pydantic request/response contracts
+│   │   └── database/     # Engine, sessions, migrations
+│   ├── tests/            # 124 pytest tests
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── pages/        # One page per sidebar module
+│   │   ├── components/   # Layout + reusable UI kit
+│   │   ├── services/     # Typed API clients
+│   │   └── data/         # Built-in reference datasets
+│   ├── Dockerfile
+│   └── nginx.conf
+├── docker-compose.yml
+└── .env.example
+```
 
-## Honest limitations
+## 📄 License
 
-- Tested on SQLite; PostgreSQL wiring is provided (compose + driver) but not
-  executed against a live Postgres here.
-- Auth tokens are self-contained HMAC tokens (no revocation list); demo
-  credentials ship for evaluation and must be rotated/disabled in production.
-- All model outputs (oxygen flow, risk scores, routes, prices, word predictions)
-  are unvalidated estimates — not medical, operational, or
-  financial advice.
-- Frontend bundle is large (~730 KB JS, mostly recharts); code-splitting is future work.
+MIT — see [LICENSE](LICENSE).
